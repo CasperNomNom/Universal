@@ -82,6 +82,7 @@ function Set-MainBackgroundBitmap { param() }
 
 
 $script:DarkMode=$true
+$script:ThemeName="Dark"
 $script:AppVersion="1.0"
 $script:GitHubRepository="CasperNomNom/Universal"
 $script:GitHubLatestReleaseApi="https://api.github.com/repos/$($script:GitHubRepository)/releases/latest"
@@ -122,6 +123,7 @@ function Apply-RoundedLayout {
             @($updateButton,10),
             @($darkThemeButton,10),
             @($lightThemeButton,10),
+            @($purpleThemeButton,10),
             @($selectButton,9),
             @($detectButton,9),
             @($installButton,10),
@@ -147,7 +149,8 @@ function Apply-RoundedLayout {
             @($debugToolbar,12),
             @($adminDot,8),
             @($darkDot,8),
-            @($lightDot,8)
+            @($lightDot,8),
+            @($purpleDot,8)
         )){
             if($item[0]){
                 Set-RoundedRegion -Control $item[0] -Radius $item[1]
@@ -214,11 +217,29 @@ $Theme = @{
         Warning     = [Drawing.Color]::FromArgb(198,117,22)
         Success     = [Drawing.Color]::FromArgb(29,164,87)
     }
+    Purple = @{
+        Form        = [Drawing.Color]::FromArgb(20,13,32)
+        Sidebar     = [Drawing.Color]::FromArgb(27,17,43)
+        Surface     = [Drawing.Color]::FromArgb(37,24,57)
+        Surface2    = [Drawing.Color]::FromArgb(49,31,75)
+        Input       = [Drawing.Color]::FromArgb(27,17,43)
+        Text        = [Drawing.Color]::FromArgb(248,243,255)
+        Muted       = [Drawing.Color]::FromArgb(190,174,211)
+        Accent      = [Drawing.Color]::FromArgb(139,92,246)
+        AccentHover = [Drawing.Color]::FromArgb(167,123,255)
+        Border      = [Drawing.Color]::FromArgb(91,64,125)
+        Warning     = [Drawing.Color]::FromArgb(246,190,92)
+        Success     = [Drawing.Color]::FromArgb(73,213,154)
+    }
 }
 
 function Apply-Theme {
     try {
-        $t = if($script:DarkMode){$Theme.Dark}else{$Theme.Light}
+        $t = switch($script:ThemeName){
+            "Purple" { $Theme.Purple; break }
+            "Light"  { $Theme.Light; break }
+            default  { $Theme.Dark }
+        }
 
         # Entire app follows one palette.
         $form.BackColor=$t.Form
@@ -288,25 +309,41 @@ function Apply-Theme {
         }
 
         # Theme selector.
-        foreach($b in @($darkThemeButton,$lightThemeButton)){
+        foreach($b in @($darkThemeButton,$lightThemeButton,$purpleThemeButton)){
             $b.FlatStyle="Flat"
             $b.FlatAppearance.BorderSize=0
             $b.UseVisualStyleBackColor=$false
         }
-        if($script:DarkMode){
+        if($script:ThemeName -eq "Dark"){
             $darkThemeButton.BackColor=$t.Accent
             $darkThemeButton.ForeColor=[Drawing.Color]::White
             $lightThemeButton.BackColor=$t.Surface2
             $lightThemeButton.ForeColor=$t.Text
+            $purpleThemeButton.BackColor=$t.Surface2
+            $purpleThemeButton.ForeColor=$t.Text
             $darkDot.BackColor=[Drawing.Color]::White
             $lightDot.BackColor=$t.Muted
-        }else{
+            $purpleDot.BackColor=$t.Muted
+        }elseif($script:ThemeName -eq "Light"){
             $lightThemeButton.BackColor=$t.Accent
             $lightThemeButton.ForeColor=[Drawing.Color]::White
             $darkThemeButton.BackColor=$t.Surface2
             $darkThemeButton.ForeColor=$t.Text
+            $purpleThemeButton.BackColor=$t.Surface2
+            $purpleThemeButton.ForeColor=$t.Text
             $lightDot.BackColor=[Drawing.Color]::White
             $darkDot.BackColor=$t.Muted
+            $purpleDot.BackColor=$t.Muted
+        }else{
+            $purpleThemeButton.BackColor=$t.Accent
+            $purpleThemeButton.ForeColor=[Drawing.Color]::White
+            $darkThemeButton.BackColor=$t.Surface2
+            $darkThemeButton.ForeColor=$t.Text
+            $lightThemeButton.BackColor=$t.Surface2
+            $lightThemeButton.ForeColor=$t.Text
+            $purpleDot.BackColor=[Drawing.Color]::White
+            $darkDot.BackColor=$t.Muted
+            $lightDot.BackColor=$t.Muted
         }
 
         # Inputs.
@@ -3807,8 +3844,8 @@ $updateButton.Add_Click({Check-ForAppUpdate})
 $sidebar.Controls.Add($updateButton)
 
 $themeCard=New-Object Windows.Forms.Panel
-$themeCard.Size=New-Object Drawing.Size(152,116)
-$themeCard.Location=New-Object Drawing.Point(24,554)
+$themeCard.Size=New-Object Drawing.Size(152,154)
+$themeCard.Location=New-Object Drawing.Point(24,516)
 $themeCard.Anchor="Bottom,Left"
 $sidebar.Controls.Add($themeCard)
 
@@ -3845,8 +3882,22 @@ $lightDot.Size=New-Object Drawing.Size(9,9)
 $lightDot.Location=New-Object Drawing.Point(124,12)
 $lightThemeButton.Controls.Add($lightDot)
 
-$darkThemeButton.Add_Click({$script:DarkMode=$true;Apply-Theme})
-$lightThemeButton.Add_Click({$script:DarkMode=$false;Apply-Theme})
+$purpleThemeButton=New-Object Windows.Forms.Button
+$purpleThemeButton.Text="Purple"
+$purpleThemeButton.TextAlign="MiddleLeft"
+$purpleThemeButton.Padding=New-Object Windows.Forms.Padding(12,0,0,0)
+$purpleThemeButton.Size=New-Object Drawing.Size(124,31)
+$purpleThemeButton.Location=New-Object Drawing.Point(14,118)
+$themeCard.Controls.Add($purpleThemeButton)
+
+$purpleDot=New-Object Windows.Forms.Panel
+$purpleDot.Size=New-Object Drawing.Size(9,9)
+$purpleDot.Location=New-Object Drawing.Point(124,12)
+$purpleThemeButton.Controls.Add($purpleDot)
+
+$darkThemeButton.Add_Click({$script:ThemeName="Dark";$script:DarkMode=$true;Apply-Theme})
+$lightThemeButton.Add_Click({$script:ThemeName="Light";$script:DarkMode=$false;Apply-Theme})
+$purpleThemeButton.Add_Click({$script:ThemeName="Purple";$script:DarkMode=$true;Apply-Theme})
 
 $adminCard=New-Object Windows.Forms.Panel
 $adminCard.Size=New-Object Drawing.Size(152,68)
@@ -4529,6 +4580,7 @@ $form.Add_Shown({
 try{Set-WindowsBackdrop}catch{};try{Apply-RoundedLayout}catch{};try{Update-DebugConsoleLayout}catch{}})
 
 # Always start in Dark mode.
+$script:ThemeName="Dark"
 $script:DarkMode=$true
 Apply-Theme
 Write-Log "Ready."
