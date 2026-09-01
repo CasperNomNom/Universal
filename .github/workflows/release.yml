@@ -1,0 +1,49 @@
+name: Build Windows Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        shell: powershell
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module ps2exe -Scope CurrentUser -Force -AllowClobber
+          choco install innosetup --yes --no-progress
+
+      - name: Build application EXE
+        shell: powershell
+        working-directory: UniversalDLSS5Installer_v1_0_Git
+        run: |
+          .\Build-EXE-v1.0.ps1
+
+      - name: Build setup EXE
+        shell: powershell
+        working-directory: UniversalDLSS5Installer_v1_0_Git\Installer
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $compiler)) {
+            $compiler = "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          }
+          & $compiler .\UniversalDLSS5Installer_v1_0.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Attach installers to release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" `
+            "UniversalDLSS5Installer_v1_0_Git\Universal DLSS 5 Installer.exe" `
+            "UniversalDLSS5Installer_v1_0_Git\Installer\Output\Universal_DLSS5_Installer_Setup_v1.1.exe" `
+            --clobber
