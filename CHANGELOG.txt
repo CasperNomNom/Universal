@@ -1,0 +1,384 @@
+Universal DLSS 5 Installer - Full Changelog
+===============================================
+Current Release: v1.0
+
+This changelog reconstructs the full development history leading to the current v1.0 release.
+Early builds were experimental development branches rather than formal public releases.
+
+PRE-RELEASE DEVELOPMENT HISTORY
+===============================
+
+L.A. Noire DLSS5 Organizer
+--------------------------
+- First game-specific utility that evolved into the Universal Installer.
+- Organized DLSS5-Feeder, ReShade, iMMERSE, RenoDX and NGX files into expected game directories.
+- Checked for required files before reporting the installation ready.
+- Originally used an iMMERSE/LaunchPad-style setup.
+
+L.A. Noire DLSS5 Organizer v2
+-----------------------------
+- Reworked the 32-bit DLSS5 layout.
+- Added separate host64 installation.
+- Added installation of:
+  - dlss5-feed.addon32
+  - reshade-shaders\Shaders\DLSS5_Feed.fx
+  - motion-estimation shaders
+  - host64\dlss5-feed-host64.exe
+  - host64\renodx-dlss5.addon64
+  - host64\nvngx_dlssnr.dll
+  - host64\nvngx_dlss.dll
+- Added automatic validation of game-side and host-side files.
+- Removed reliance on the old LaunchPad arrangement for newer feeder layouts.
+
+L.A. Noire DLSS5 Auto Installer
+-------------------------------
+- Moved from file organization to automatic downloading.
+- Added detection of LANoire.exe.
+- Added automatic DLSS5-Feeder GitHub release retrieval.
+- Added ReshadeMotionEstimation download.
+- Added RenoDX DLSS5 package retrieval.
+- Added automatic extraction/copying.
+- Added backup-before-replacement behavior.
+- Added automatic download of ReShade 6.8.0 Full Add-on.
+
+L.A. Noire DLSS5 Auto Installer v3
+----------------------------------
+- Continued hardening of the automatic installer.
+- Improved download/install handling and error recovery.
+- Became the basis for moving away from a single-game installer.
+
+Universal DLSS5 Installer - API Select
+--------------------------------------
+- First genuinely universal branch.
+- Added renderer/API selection instead of assuming one game configuration.
+- Began separating game detection from DLSS installation logic.
+- Established the universal installer concept instead of maintaining separate BAT installers.
+
+Universal DLSS5 Installer - Profile Aware v2
+--------------------------------------------
+- Added executable selection.
+- Added architecture detection.
+- Added game/profile detection.
+- Added ReShade proxy selection.
+- Added launcher/bootstrap detection warnings.
+- Added nearby executable scanning.
+- Added ability to change the selected DirectX API.
+- Added automatic administrator elevation before modifying game files.
+- Added FeedKit retrieval from GitHub.
+- Added profile-screen reporting for:
+  - executable
+  - folder
+  - API
+  - architecture
+  - profile
+  - ReShade proxy
+
+
+UNIVERSAL DLSS 5 INSTALLER v4.x DEVELOPMENT LINE
+================================================
+
+v4.3.8 - Core UI Baseline
+-------------------------
+This became the long-lived development branch from which almost all of the current application was derived.
+
+Major changes:
+- Migrated from BAT-style menus to a PowerShell WinForms application.
+- Added Installer and Debug Console pages.
+- Added dark/light theme support.
+- Added rounded panels and controls.
+- Added responsive layout.
+- Added game executable selection.
+- Added architecture detection.
+- Added renderer detection.
+- Added profile detection.
+- Added ReShade runtime-evidence detection.
+- Added installation status cards.
+- Added administrator-state indication.
+- Added automatic game-log mirroring.
+- Added Verify and Repair actions.
+- Added full scrolling debug output.
+- Added debug-log copy/save/clear functions.
+- Added game-log loading.
+- Added collected-log folder access.
+- Added adjustable debug-console font size.
+- Added x86/x64 game profile support.
+- Added renderer-aware proxy selection.
+- Added protections against installing into launchers instead of real rendering executables.
+
+v4.3.8 - DX9 Safe Stage / Debug Fit
+-----------------------------------
+UI:
+- Reworked Debug Console sizing for different window sizes.
+- Added responsive debug layout.
+- Improved toolbar sizing.
+- Added contained log display.
+- Added A- and A+ font controls.
+- Improved startup layout.
+- Added rounded UI helpers.
+- Added safer theme/backdrop handling.
+
+DX9:
+- Added experimental DirectX 9 handling for older 32-bit games.
+- Saints Row 2 started receiving game-specific handling.
+
+v4.3.8 - Saints Row 2 Crash Isolation
+-------------------------------------
+- Added a dedicated SR2 troubleshooting framework.
+- Added staged component-disable testing.
+- Tested disabling:
+  - shaders
+  - ReShade
+  - dgVoodoo
+- Identified repeated crash around:
+  SR2_pc.exe +0x5EE9F2
+- Determined that disabling dgVoodoo stopped the crash.
+- This changed the SR2 strategy away from dgVoodoo.
+
+v4.3.8 - SR2 Safe dgVoodoo / Auto Rollback
+-------------------------------------------
+- Added three conservative dgVoodoo compatibility profiles.
+- Added safer GPU/VRAM settings.
+- Added automatic launch testing.
+- Added known-crash signature monitoring.
+- Added automatic rollback after crash detection.
+- All tested profiles still crashed.
+- dgVoodoo was rejected for Saints Row 2.
+
+v4.3.8 - SR2 DXVK Experimental
+------------------------------
+- Replaced:
+  D3D9 -> dgVoodoo -> D3D11
+  with:
+  D3D9 -> DXVK x86 -> Vulkan
+- Used DXVK 2.4 x32.
+- Saints Row 2 successfully launched and ran through DXVK.
+- Established DXVK as the validated translation layer for SR2.
+
+v4.3.8 - SR2 DXVK Default
+-------------------------
+- Promoted DXVK from experiment to preferred SR2 translation path.
+- SR2-specific handling deliberately avoided dgVoodoo.
+- Established intended SR2 renderer path:
+  SR2 D3D9 -> DXVK x86 -> Vulkan
+
+v4.3.8 - SR2 Vulkan32 Neural Rendering Beta
+-------------------------------------------
+- Added experimental 32-bit Vulkan DLSS5 transport.
+- Established architecture:
+  SR2
+  -> D3D9
+  -> DXVK x86
+  -> Vulkan
+  -> ReShade 32-bit Vulkan
+  -> DLSS5 Feed 32-bit
+  -> 64-bit host
+- First attempt at DLSS 5 Neural Rendering in a 32-bit DirectX 9 title.
+
+v4.3.8 - Vulkan32 Host Fix
+--------------------------
+- Fixed PowerShell variable collision where $host conflicted with built-in $Host.
+- Changed the host executable variable to a safe name such as $hostExe.
+- Allowed the 64-bit feeder host to launch correctly.
+
+v4.3.8 - Vulkan32 ReShade Choice
+--------------------------------
+- Added explicit handling for the required ReShade build.
+- Established that the Full Add-on build was needed for the DLSS5 feeder.
+- Important for x86 titles.
+
+v4.3.8 - Vulkan32 Shader Fix
+----------------------------
+- Added/repaired:
+  reshade-shaders\Shaders\DLSS5_Feed.fx
+- Corrected ReShade shader search paths.
+- Resolved cases where ReShade loaded but DLSS5 Feed did not compile or appear.
+
+v4.3.8 - Vulkan32 Feed Core Fix
+-------------------------------
+- Added validation and repair for:
+  - dlss5-feed.addon32
+  - reshade-shaders\Shaders\DLSS5_Feed.fx
+  - host64\dlss5-feed-host64.exe
+- Added motion-vector provider configuration:
+  DLSS5_MV_PROVIDER=3
+- Used Lumenite Kernel as the preferred motion-vector provider.
+- Established reliable 32-bit feeder registration.
+
+v4.3.8 - SR2 Mode 1 Transport Validation
+----------------------------------------
+- Added dedicated transport-test mode.
+- Mode 1 intentionally produced the split/partial-screen transport visualization.
+- Validated:
+  - ReShade Vulkan loaded
+  - dlss5-feed.addon32 registered
+  - DLSS5_Feed.fx compiled
+  - Vulkan interop resolved
+  - shared resources created
+  - frames delivered through Vulkan
+- Proved the 32-bit -> 64-bit transport path worked.
+
+v4.3.8 - SR2 Mode 2 Neural Rendering
+------------------------------------
+- Added real Neural Rendering mode.
+- Successful runtime verification established:
+  - Vulkan frames delivered
+  - host64 connected
+  - NGX Feature 18 created
+  - inline Feature 18 evaluation succeeded
+- First confirmed end-to-end SR2 pipeline:
+  D3D9
+  -> DXVK x86
+  -> Vulkan
+  -> ReShade Vulkan32
+  -> DLSS5 Feed32
+  -> Host64
+  -> D3D12/NGX
+  -> DLSS5 Neural Rendering
+
+v4.3.8 - SR2 Neural Rendering Settings UI
+-----------------------------------------
+This became the branch later selected as the official release baseline.
+
+Added awareness of the real DLSS5 Feed host-settings interface, including:
+- Enable Neural Rendering
+- Enable Upscaling
+- NR Preset
+- NR Style
+- NR Intensity
+- Local Tone Strength
+- Local Structure Strength
+- Skin Structure Strength
+- Automatic Mask
+- UI Correction
+- Paper White Scale
+- HDR Transfer Strength
+- Color Strength
+- motion-vector/depth controls
+
+Established the correct workflow:
+- change settings inside DLSS 5 Feed
+- Apply to the DLSS 5 host
+- optionally Reload from host
+
+Corrected the earlier assumption that these settings belonged exclusively in ReShade's Add-ons page.
+
+IMPORTANT RELEASE DECISION
+--------------------------
+The SR2 Neural Rendering Settings UI branch was explicitly selected as the branch to preserve.
+
+Everything after this point from the experimental Natural Pipeline branch was excluded from the official release line.
+
+
+DISCARDED / EXPERIMENTAL v4.3.8 BRANCHES
+========================================
+
+SR2 Natural Pipeline
+--------------------
+- Attempted to combine validated SR2 steps into a one-click sequence:
+  DXVK -> ReShade Vulkan -> iMMERSE -> DLSS5 feeder -> Lumenite -> NR
+
+Natural Pipeline + Automatic iMMERSE
+------------------------------------
+- Added automatic iMMERSE download and installation.
+
+Feeder Release Resolver Experiments
+-----------------------------------
+- Attempted automatic DLSS5-Feeder release selection.
+- Exposed GitHub release/tag handling issues involving:
+  - v0.8.0-release.3
+  - 0.8.0-beta.3
+  - v0.8.0-beta.3
+- These experiments were not merged into the release baseline.
+
+Launch-Fix / Tag-Fix Builds
+---------------------------
+- Emergency builds created while debugging the experimental Natural Pipeline branch.
+- Also discarded from the official lineage.
+
+IMPORTANT:
+These branches are historical experiments only.
+They are not ancestors of the official v1.0 release.
+
+
+v4.3.8 - SR2 Neural Rendering Settings UI + Mini Debug Console
+=============================================================
+This is the direct parent of v1.0.
+
+Starting strictly from the SR2 Neural Rendering Settings UI baseline, one selected improvement was added:
+
+Installer Mini Debug Console
+----------------------------
+- Added a two-line read-only status/debug display below the Installer status area.
+- Displays the latest two Write-Log entries.
+- Updates live during installation.
+- Non-clickable.
+- Non-selectable.
+- No scrollbar.
+- Uses compact Consolas text.
+- Uses the same orange/warning text color as the existing installer warning.
+- Leaves the full Debug Console page unchanged.
+
+No Natural Pipeline code, automatic iMMERSE code, release-resolver experiment, or other discarded branch was merged.
+
+
+UNIVERSAL DLSS 5 INSTALLER v1.0
+===============================
+Current Official Release
+
+v1.0 is the release renumbering of:
+v4.3.8 SR2 Neural Rendering Settings UI + Mini Debug Console
+
+The project moved from the old development-version numbering scheme to a normal release sequence.
+
+Current v1.0 foundation:
+- WinForms GUI
+- dark/light theming
+- executable selection
+- x86/x64 architecture detection
+- renderer detection
+- game/profile detection
+- runtime ReShade-log detection
+- Install / Verify / Repair functionality
+- full Debug Console
+- automatic log mirroring
+- two-line Installer mini console
+- ReShade support
+- DLSS5 feeder installation framework
+- 32-bit feeder support
+- 64-bit host architecture
+- SR2-specific Neural Rendering tooling
+- SR2 DLSS5 Feed settings support
+- Lumenite motion-vector support
+- validated DXVK/Vulkan research retained where applicable
+- runtime verification designed to avoid falsely reporting Neural Rendering as active
+
+Project filename change:
+- UniversalDLSS5Installer_v4_3_8.ps1
+  became
+- UniversalDLSS5Installer_v1_0.ps1
+
+
+OFFICIAL VERSION LINEAGE
+========================
+Pre-release tools
+-> v4.3.8 development series
+-> SR2 Neural Rendering Settings UI
+-> SR2 Neural Rendering Settings UI + Mini Debug Console
+-> v1.0
+
+
+VERSIONING GOING FORWARD
+========================
+Recommended versioning:
+
+v1.0.1
+- Bug fixes only.
+
+v1.1
+- New games/features while keeping the same architecture.
+
+v1.2
+- Larger feature additions.
+
+v2.0
+- Major UI/backend or installer-architecture change.

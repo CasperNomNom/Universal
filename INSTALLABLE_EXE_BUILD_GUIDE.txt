@@ -1,0 +1,70 @@
+Universal DLSS 5 Installer v1.0 - Installable EXE Build
+============================================================
+
+WHAT THIS PROJECT BUILDS
+------------------------
+1. Universal DLSS 5 Installer.exe
+   - Compiled from UniversalDLSS5Installer_v1_0.ps1 using PS2EXE.
+   - No PowerShell console window.
+   - STA mode for WinForms.
+   - Requests Administrator rights at launch.
+   - Windows file metadata set to version 1.0.0.0.
+
+2. Universal_DLSS5_Installer_Setup_v1.0.exe
+   - Standard Windows installer made with Inno Setup 6.
+   - Installs under Program Files.
+   - Creates a Start Menu shortcut.
+   - Optional Desktop shortcut.
+   - Registers in Windows Installed Apps / Programs and Features.
+   - Supports normal uninstall.
+   - Can launch the application when setup finishes.
+
+HOW TO BUILD ON WINDOWS
+-----------------------
+Double-click:
+
+    BUILD RELEASE v1.0.bat
+
+The builder will:
+- install PS2EXE for your Windows user if needed;
+- compile the application;
+- locate Inno Setup 6;
+- use winget to install Inno Setup if it is missing;
+- compile the final Setup EXE.
+
+FINAL OUTPUT
+------------
+Installer\Output\Universal_DLSS5_Installer_Setup_v1.0.exe
+
+DEVELOPMENT WORKFLOW
+--------------------
+Continue editing:
+    UniversalDLSS5Installer_v1_0.ps1
+
+Then rerun:
+    BUILD RELEASE v1.0.bat
+
+This keeps the editable PowerShell source as the development source while
+the EXE and Setup EXE are generated release artifacts.
+
+IMPORTANT
+---------
+The compiled application requests Administrator privileges. This avoids the
+old script-mode elevation path attempting to relaunch a compiled EXE through
+powershell.exe -File and also permits game-folder writes under Program Files.
+
+A custom .ico can be added later without changing the application architecture.
+
+
+COMPILED EXE APP-ROOT FIX
+-------------------------
+PS2EXE does not guarantee that PowerShell's $PSScriptRoot is populated the
+same way it is when a .ps1 file is launched normally.
+
+The v1.0 EXE build now resolves AppRoot in this order:
+1. $PSScriptRoot when running as the editable .ps1 source
+2. Process.MainModule.FileName when running as the compiled EXE
+3. Environment.CurrentDirectory as a final fallback
+
+All Tools and Logs paths use AppRoot. This fixes the startup error:
+  Cannot bind argument to parameter 'Path' because it is an empty string.
