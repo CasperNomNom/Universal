@@ -82,6 +82,10 @@ function Set-MainBackgroundBitmap { param() }
 
 
 $script:DarkMode=$true
+$script:AppVersion="1.0"
+$script:GitHubRepository="CasperNomNom/Universal"
+$script:GitHubLatestReleaseApi="https://api.github.com/repos/$($script:GitHubRepository)/releases/latest"
+$script:GitHubTagsApi="https://api.github.com/repos/$($script:GitHubRepository)/tags?per_page=100"
 
 
 # ---------- UI helper functions ----------
@@ -115,6 +119,7 @@ function Apply-RoundedLayout {
         foreach($item in @(
             @($installerNavButton,10),
             @($debugNavButton,10),
+            @($updateButton,10),
             @($darkThemeButton,10),
             @($lightThemeButton,10),
             @($selectButton,9),
@@ -239,7 +244,7 @@ function Apply-Theme {
         }
 
         # Secondary buttons.
-        foreach($b in @($selectButton,$detectButton,$verifyButton,$repairButton,$dgVoodooButton,$feedFixButton,$sr2IsolationButton,$openButton,$smallerLogButton,$largerLogButton,
+        foreach($b in @($updateButton,$selectButton,$detectButton,$verifyButton,$repairButton,$dgVoodooButton,$feedFixButton,$sr2IsolationButton,$openButton,$smallerLogButton,$largerLogButton,
                         $copyDebugButton,$saveDebugButton,$clearDebugButton,$loadGameLogsButton,$openCollectedLogsButton)){
             if($b){
                 $b.FlatStyle="Flat"
@@ -369,6 +374,152 @@ function Write-Log {
     } catch {}
 
     [System.Windows.Forms.Application]::DoEvents()
+}
+
+function ConvertTo-UpdateVersion {
+    param([string]$Text)
+
+    $clean=([string]$Text).Trim()
+    $clean=$clean -replace '^[vV]',''
+    $match=[regex]::Match($clean,'^\d+(?:\.\d+){0,3}')
+    if(-not $match.Success){ return $null }
+
+    try { return [Version]$match.Value } catch { return $null }
+}
+
+function Check-ForAppUpdate {
+    $originalText=$updateButton.Text
+    try {
+        $updateButton.Enabled=$false
+        $updateButton.Text="Checking..."
+        [Windows.Forms.Application]::DoEvents()
+        Write-Log "[UPDATE] Checking GitHub for a newer release..."
+
+        $headers=@{
+            "User-Agent"="Universal-DLSS5-Installer/$($script:AppVersion)"
+            "Accept"="application/vnd.github+json"
+        }
+        $currentVersion=ConvertTo-UpdateVersion $script:AppVersion
+        $release=$null
+        try {
+            $release=Invoke-RestMethod -UseBasicParsing -Headers $headers -Uri $script:GitHubLatestReleaseApi
+        } catch {
+            $statusCode=$null
+            try { $statusCode=[int]$_.Exception.Response.StatusCode } catch {}
+            if($statusCode -ne 404){ throw }
+
+            # GitHub returns 404 from /releases/latest when a repository has tags
+            # but no published Release. Treat that as a normal project state.
+            $tags=Invoke-RestMethod -UseBasicParsing -Headers $headers -Uri $script:GitHubTagsApi
+            $versionedTags=@($tags | ForEach-Object {
+                $parsed=ConvertTo-UpdateVersion $_.name
+                if($parsed){ [PSCustomObject]@{ Name=$_.name; Version=$parsed } }
+            } | Sort-Object Version -Descending)
+            $latestTag=$versionedTags | Select-Object -First 1
+
+            if($latestTag -and $latestTag.Version -gt $currentVersion){
+                Write-Log "[UPDATE] Tag $($latestTag.Name) exists, but no installable GitHub Release has been published."
+                $noPackageMessage="Version $($latestTag.Name) is tagged on GitHub, but it has not been published as a Release with a Windows setup file yet.`r`n`r`nOpen GitHub Releases?"
+            } else {
+                Write-Log "[UPDATE] Version $($script:AppVersion) is current. No update package has been published."
+                $noPackageMessage="You have the latest tagged version ($($script:AppVersion)).`r`n`r`nNo installable update package has been published on GitHub yet."
+            }
+
+            $buttons=if($latestTag -and $latestTag.Version -gt $currentVersion){
+                [Windows.Forms.MessageBoxButtons]::YesNo
+            }else{
+                [Windows.Forms.MessageBoxButtons]::OK
+            }
+            $choice=[Windows.Forms.MessageBox]::Show(
+                $noPackageMessage,
+                "No published update",
+                $buttons,
+                [Windows.Forms.MessageBoxIcon]::Information
+            )
+            if($choice -eq [Windows.Forms.DialogResult]::Yes){
+                Start-Process "https://github.com/$($script:GitHubRepository)/releases"
+            }
+            return
+        }
+
+        $latestVersion=ConvertTo-UpdateVersion $release.tag_name
+
+        if(-not $latestVersion){
+            throw "GitHub's latest release tag '$($release.tag_name)' is not a supported version number."
+        }
+
+        if($latestVersion -le $currentVersion){
+            Write-Log "[UPDATE] Version $($script:AppVersion) is current."
+            [Windows.Forms.MessageBox]::Show(
+                "You already have the latest version ($($script:AppVersion)).",
+                "Universal DLSS 5 Installer",
+                [Windows.Forms.MessageBoxButtons]::OK,
+                [Windows.Forms.MessageBoxIcon]::Information
+            ) | Out-Null
+            return
+        }
+
+        $asset=$release.assets | Where-Object {
+            $_.name -match '(?i)(setup|installer).*\.exe$'
+        } | Select-Object -First 1
+
+        if(-not $asset){
+            Write-Log "[UPDATE] Release $($release.tag_name) is available, but it has no Windows setup EXE."
+            $openRelease=[Windows.Forms.MessageBox]::Show(
+                "Version $($release.tag_name) is available, but GitHub does not contain a Windows setup file for it yet.`r`n`r`nOpen the release page?",
+                "Update available",
+                [Windows.Forms.MessageBoxButtons]::YesNo,
+                [Windows.Forms.MessageBoxIcon]::Information
+            )
+            if($openRelease -eq [Windows.Forms.DialogResult]::Yes){
+                Start-Process $release.html_url
+            }
+            return
+        }
+
+        $answer=[Windows.Forms.MessageBox]::Show(
+            "Version $($release.tag_name) is available.`r`n`r`nDownload and start the official GitHub installer now? The app will close after the installer starts.",
+            "Update available",
+            [Windows.Forms.MessageBoxButtons]::YesNo,
+            [Windows.Forms.MessageBoxIcon]::Question
+        )
+        if($answer -ne [Windows.Forms.DialogResult]::Yes){
+            Write-Log "[UPDATE] Update cancelled."
+            return
+        }
+
+        $downloadDir=Join-Path ([IO.Path]::GetTempPath()) "UniversalDLSS5Installer\Updates"
+        [IO.Directory]::CreateDirectory($downloadDir) | Out-Null
+        $safeAssetName=[IO.Path]::GetFileName([string]$asset.name)
+        if([string]::IsNullOrWhiteSpace($safeAssetName)){ throw "The release asset has an invalid filename." }
+        $downloadPath=Join-Path $downloadDir $safeAssetName
+
+        $updateButton.Text="Downloading..."
+        [Windows.Forms.Application]::DoEvents()
+        Write-Log "[UPDATE] Downloading $safeAssetName from GitHub..."
+        Invoke-WebRequest -UseBasicParsing -Headers $headers -Uri $asset.browser_download_url -OutFile $downloadPath
+
+        if(-not (Test-Path -LiteralPath $downloadPath) -or (Get-Item -LiteralPath $downloadPath).Length -lt 1){
+            throw "The downloaded setup file is empty or missing."
+        }
+
+        Write-Log "[UPDATE] Download complete. Starting the installer..."
+        Start-Process -FilePath $downloadPath
+        $form.Close()
+    } catch {
+        Write-Log "[UPDATE ERROR] $($_.Exception.Message)"
+        [Windows.Forms.MessageBox]::Show(
+            "The update check could not be completed.`r`n`r`n$($_.Exception.Message)",
+            "Update check failed",
+            [Windows.Forms.MessageBoxButtons]::OK,
+            [Windows.Forms.MessageBoxIcon]::Error
+        ) | Out-Null
+    } finally {
+        if($updateButton -and -not $updateButton.IsDisposed){
+            $updateButton.Text=$originalText
+            $updateButton.Enabled=$true
+        }
+    }
 }
 
 function Get-PeArchitecture {
@@ -3644,6 +3795,16 @@ $aboutLabel.Text="About"
 $aboutLabel.AutoSize=$true
 $aboutLabel.Location=New-Object Drawing.Point(40,260)
 $sidebar.Controls.Add($aboutLabel)
+
+$updateButton=New-Object Windows.Forms.Button
+$updateButton.Text="Check for updates"
+$updateButton.TextAlign="MiddleLeft"
+$updateButton.Padding=New-Object Windows.Forms.Padding(16,0,0,0)
+$updateButton.Font=New-Object Drawing.Font("Segoe UI Semibold",9)
+$updateButton.Size=New-Object Drawing.Size(152,38)
+$updateButton.Location=New-Object Drawing.Point(24,302)
+$updateButton.Add_Click({Check-ForAppUpdate})
+$sidebar.Controls.Add($updateButton)
 
 $themeCard=New-Object Windows.Forms.Panel
 $themeCard.Size=New-Object Drawing.Size(152,116)
