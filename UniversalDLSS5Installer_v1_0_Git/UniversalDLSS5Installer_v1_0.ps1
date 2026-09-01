@@ -83,7 +83,7 @@ function Set-MainBackgroundBitmap { param() }
 
 $script:DarkMode=$true
 $script:ThemeName="Dark"
-$script:AppVersion="1.11"
+$script:AppVersion="1.12"
 $script:GitHubRepository="CasperNomNom/Universal"
 $script:GitHubLatestReleaseApi="https://api.github.com/repos/$($script:GitHubRepository)/releases/latest"
 $script:GitHubTagsApi="https://api.github.com/repos/$($script:GitHubRepository)/tags?per_page=100"
@@ -1067,6 +1067,49 @@ function Select-Game {
 
         Update-GameDisplay
     }
+}
+
+function Apply-WatchDogsFeedCompatibility {
+    if(-not $script:GameExe -or ([IO.Path]::GetFileName($script:GameExe) -ine 'Watch_Dogs.exe')){
+        return
+    }
+
+    Write-Log '[WATCH DOGS] Applying stable DLSS5-Feeder compatibility settings...'
+
+    # RenoDX Upgrade crashes Watch Dogs in Disrupt_b64.dll during swap-chain startup.
+    # The standalone DX11 bridge is for games that already call DLSS; Watch Dogs does
+    # not, and upstream explicitly says not to run it beside DLSS5-Feeder.
+    foreach($name in @('renodx-upgrade.addon64','dlss5-dx11-bridge.addon64')){
+        $active=Join-Path $script:GameDir $name
+        if(Test-Path -LiteralPath $active){
+            $off=$active + '.off'
+            if(Test-Path -LiteralPath $off){
+                $off=$active + '.' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.off'
+            }
+            Move-Item -LiteralPath $active -Destination $off -Force
+            Write-Log "[WATCH DOGS] Disabled $name (preserved as $(Split-Path -Leaf $off))."
+        }
+    }
+
+    $cfgPath=Join-Path $script:GameDir 'dlss5-feed.cfg'
+    $settings=[ordered]@{
+        enabled='1'
+        create_delay='10'
+    }
+    $lines=New-Object System.Collections.Generic.List[string]
+    if(Test-Path -LiteralPath $cfgPath){
+        foreach($line in [IO.File]::ReadAllLines($cfgPath)){
+            if($line -match '^\s*(enabled|create_delay)\s*='){ continue }
+            $lines.Add($line)
+        }
+    }
+    $normalized=New-Object System.Collections.Generic.List[string]
+    foreach($entry in $settings.GetEnumerator()){
+        $normalized.Add("$($entry.Key)=$($entry.Value)")
+    }
+    foreach($line in $lines){ $normalized.Add($line) }
+    [IO.File]::WriteAllLines($cfgPath,$normalized,[Text.UTF8Encoding]::new($false))
+    Write-Log '[WATCH DOGS] Feed enabled with a 10-second creation delay; duplicate settings removed.'
 }
 
 function Run-SelectedGame {
@@ -3652,6 +3695,8 @@ function Install-DLSS5 {
             return
         }
 
+        Apply-WatchDogsFeedCompatibility
+
         # IMPORTANT: v2 does NOT automatically reinstall ReShade.
         Write-Log "[OK] FeedKit installation acknowledged."
         Write-Log "Running verification. ReShade will only be repaired if you explicitly click Repair ReShade."
@@ -3807,7 +3852,7 @@ function Update-GameArtwork {
 
 # ---------- UI ----------
 $form=New-Object Windows.Forms.Form
-$form.Text="Universal DLSS 5 Installer v1.11"
+$form.Text="Universal DLSS 5 Installer v1.12"
 $form.StartPosition="CenterScreen"
 $form.Size=New-Object Drawing.Size(1180,872)
 $form.MinimumSize=New-Object Drawing.Size(1080,760)
@@ -3830,7 +3875,7 @@ $brandLabel.Location=New-Object Drawing.Point(24,28)
 $sidebar.Controls.Add($brandLabel)
 
 $versionLabel=New-Object Windows.Forms.Label
-$versionLabel.Text="Universal Installer  v1.11"
+$versionLabel.Text="Universal Installer  v1.12"
 $versionLabel.AutoSize=$true
 $versionLabel.Location=New-Object Drawing.Point(25,58)
 $sidebar.Controls.Add($versionLabel)
@@ -3949,7 +3994,7 @@ $adminDot.Location=New-Object Drawing.Point(145,16)
 $adminCard.Controls.Add($adminDot)
 
 $adminVersionLabel=New-Object Windows.Forms.Label
-$adminVersionLabel.Text="Version 1.11"
+$adminVersionLabel.Text="Version 1.12"
 $adminVersionLabel.AutoSize=$true
 $adminVersionLabel.Location=New-Object Drawing.Point(14,43)
 $adminCard.Controls.Add($adminVersionLabel)
@@ -4626,7 +4671,7 @@ Apply-Theme
 Write-Log "Ready."
 Write-Log "[APP] Runtime root: $script:AppRoot"
 Write-Log "Game logs are automatically mirrored into the Logs folder beside this installer while it is running."
-Write-Log "v1.11: Run game, GitHub updates, and Purple theme; SR2 DXVK/Vulkan + DLSS5 Neural Rendering path."
+Write-Log "v1.12: Watch Dogs-safe FeedKit cleanup, Run game, GitHub updates, and Purple theme."
 Write-Log "If detection is uncertain, launch once and click Re-detect. Runtime ReShade.log evidence takes priority."
 
 [void]$form.ShowDialog()

@@ -1,6 +1,19 @@
 Universal DLSS 5 Installer - Full Changelog
 ===============================================
-Current Release: v1.11
+Current Release: v1.12
+
+======================================================================
+UNIVERSAL DLSS 5 INSTALLER v1.12
+======================================================================
+
+- Added automatic Watch Dogs compatibility cleanup after FeedKit installs.
+- Automatically disables RenoDX Upgrade for Watch Dogs to prevent the
+  Disrupt_b64.dll startup crash.
+- Automatically disables the standalone DX11 bridge for Watch Dogs because
+  DLSS5-Feeder supplies the synthetic DLSS path for games without native DLSS.
+- Enables the feeder, sets a 10-second creation delay, and removes duplicate
+  feed configuration keys.
+- Preserves disabled add-ons as recoverable .off files.
 
 ======================================================================
 UNIVERSAL DLSS 5 INSTALLER v1.11

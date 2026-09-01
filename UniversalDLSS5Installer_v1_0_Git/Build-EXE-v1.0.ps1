@@ -12,7 +12,7 @@ if (-not (Test-Path $src)) {
 
 Write-Host ""
 Write-Host "============================================================"
-Write-Host " Universal DLSS 5 Installer v1.11 - Application EXE Builder"
+Write-Host " Universal DLSS 5 Installer v1.12 - Application EXE Builder"
 Write-Host "============================================================"
 Write-Host ""
 
@@ -47,7 +47,7 @@ $args = @{
     Description = "Universal DLSS 5 Installer"
     Product     = "Universal DLSS 5 Installer"
     Company     = "Universal DLSS 5 Installer"
-    Version     = "1.11.0.0"
+    Version     = "1.12.0.0"
     Copyright   = "Universal DLSS 5 Installer"
 }
 

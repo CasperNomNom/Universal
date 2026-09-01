@@ -9,7 +9,7 @@ $iss = Join-Path $here "Installer\UniversalDLSS5Installer_v1_0.iss"
 
 Write-Host ""
 Write-Host "============================================================"
-Write-Host " Universal DLSS 5 Installer v1.11 - Full Release Builder"
+Write-Host " Universal DLSS 5 Installer v1.12 - Full Release Builder"
 Write-Host "============================================================"
 Write-Host ""
 
@@ -59,7 +59,7 @@ try {
     Pop-Location
 }
 
-$setup = Join-Path $here "Installer\Output\Universal_DLSS5_Installer_Setup_v1.11.exe"
+$setup = Join-Path $here "Installer\Output\Universal_DLSS5_Installer_Setup_v1.12.exe"
 if (-not (Test-Path $setup)) {
     throw "Setup build completed but the expected installer was not found: $setup"
 }
