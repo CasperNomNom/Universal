@@ -44,6 +44,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload "${{ github.event.release.tag_name }}" `
-            "UniversalDLSS5Installer_v1_0_Git\Universal DLSS 5 Installer.exe" `
-            "UniversalDLSS5Installer_v1_0_Git\Installer\Output\Universal_DLSS5_Installer_Setup_v1.1.exe" `
+            "UniversalDLSS5Installer_v1_0_Git\Installer\Output\Universal_DLSS5_Installer_Setup_v1.11.exe" `
             --clobber
