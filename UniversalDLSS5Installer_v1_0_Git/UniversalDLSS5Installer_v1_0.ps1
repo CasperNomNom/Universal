@@ -83,7 +83,7 @@ function Set-MainBackgroundBitmap { param() }
 
 $script:DarkMode=$true
 $script:ThemeName="Dark"
-$script:AppVersion="1.0"
+$script:AppVersion="1.11"
 $script:GitHubRepository="CasperNomNom/Universal"
 $script:GitHubLatestReleaseApi="https://api.github.com/repos/$($script:GitHubRepository)/releases/latest"
 $script:GitHubTagsApi="https://api.github.com/repos/$($script:GitHubRepository)/tags?per_page=100"
@@ -126,6 +126,7 @@ function Apply-RoundedLayout {
             @($purpleThemeButton,10),
             @($selectButton,9),
             @($detectButton,9),
+            @($runGameButton,9),
             @($installButton,10),
             @($verifyButton,9),
             @($repairButton,9),
@@ -265,7 +266,7 @@ function Apply-Theme {
         }
 
         # Secondary buttons.
-        foreach($b in @($updateButton,$selectButton,$detectButton,$verifyButton,$repairButton,$dgVoodooButton,$feedFixButton,$sr2IsolationButton,$openButton,$smallerLogButton,$largerLogButton,
+        foreach($b in @($updateButton,$selectButton,$detectButton,$runGameButton,$verifyButton,$repairButton,$dgVoodooButton,$feedFixButton,$sr2IsolationButton,$openButton,$smallerLogButton,$largerLogButton,
                         $copyDebugButton,$saveDebugButton,$clearDebugButton,$loadGameLogsButton,$openCollectedLogsButton)){
             if($b){
                 $b.FlatStyle="Flat"
@@ -1068,6 +1069,34 @@ function Select-Game {
     }
 }
 
+function Run-SelectedGame {
+    if(-not $script:GameExe -or -not (Test-Path -LiteralPath $script:GameExe -PathType Leaf)){
+        Write-Log "[RUN] No valid game executable is selected."
+        [Windows.Forms.MessageBox]::Show(
+            "Select a valid game executable first.",
+            "Run game",
+            [Windows.Forms.MessageBoxButtons]::OK,
+            [Windows.Forms.MessageBoxIcon]::Information
+        ) | Out-Null
+        return
+    }
+
+    try {
+        $workingDirectory=Split-Path -Parent $script:GameExe
+        Write-Log "[RUN] Launching selected game: $($script:GameExe)"
+        Start-Process -FilePath $script:GameExe -WorkingDirectory $workingDirectory
+        Write-Log "[RUN] Launch request completed."
+    } catch {
+        Write-Log "[RUN ERROR] $($_.Exception.Message)"
+        [Windows.Forms.MessageBox]::Show(
+            "The selected game could not be launched.`r`n`r`n$($_.Exception.Message)",
+            "Run game failed",
+            [Windows.Forms.MessageBoxButtons]::OK,
+            [Windows.Forms.MessageBoxIcon]::Error
+        ) | Out-Null
+    }
+}
+
 function Update-GameDisplay {
     if(-not $script:GameExe){return}
     $script:GameDir=Split-Path -Parent $script:GameExe
@@ -1076,6 +1105,9 @@ function Update-GameDisplay {
     $guess=Get-RendererGuess $script:GameExe
 
     $gamePathBox.Text=$script:GameExe
+    if($runGameButton){
+        $runGameButton.Enabled=(Test-Path -LiteralPath $script:GameExe -PathType Leaf)
+    }
     $archValue.Text=$script:Architecture
     $profileValue.Text=$script:Profile
     $detectValue.Text="$($guess.Api) ($($guess.Confidence))"
@@ -3775,7 +3807,7 @@ function Update-GameArtwork {
 
 # ---------- UI ----------
 $form=New-Object Windows.Forms.Form
-$form.Text="Universal DLSS 5 Installer v1.0"
+$form.Text="Universal DLSS 5 Installer v1.11"
 $form.StartPosition="CenterScreen"
 $form.Size=New-Object Drawing.Size(1180,872)
 $form.MinimumSize=New-Object Drawing.Size(1080,760)
@@ -3798,7 +3830,7 @@ $brandLabel.Location=New-Object Drawing.Point(24,28)
 $sidebar.Controls.Add($brandLabel)
 
 $versionLabel=New-Object Windows.Forms.Label
-$versionLabel.Text="Universal Installer  v1.0"
+$versionLabel.Text="Universal Installer  v1.11"
 $versionLabel.AutoSize=$true
 $versionLabel.Location=New-Object Drawing.Point(25,58)
 $sidebar.Controls.Add($versionLabel)
@@ -3917,7 +3949,7 @@ $adminDot.Location=New-Object Drawing.Point(145,16)
 $adminCard.Controls.Add($adminDot)
 
 $adminVersionLabel=New-Object Windows.Forms.Label
-$adminVersionLabel.Text="Version 1.0"
+$adminVersionLabel.Text="Version 1.11"
 $adminVersionLabel.AutoSize=$true
 $adminVersionLabel.Location=New-Object Drawing.Point(14,43)
 $adminCard.Controls.Add($adminVersionLabel)
@@ -4016,6 +4048,14 @@ $detectButton.Size=New-Object Drawing.Size(110,31)
 $detectButton.Location=New-Object Drawing.Point(324,103)
 $detectButton.Add_Click({if($script:GameExe){Update-GameDisplay}})
 $gameCard.Controls.Add($detectButton)
+
+$runGameButton=New-Object Windows.Forms.Button
+$runGameButton.Text="Run game"
+$runGameButton.Size=New-Object Drawing.Size(110,31)
+$runGameButton.Location=New-Object Drawing.Point(444,103)
+$runGameButton.Enabled=$false
+$runGameButton.Add_Click({Run-SelectedGame})
+$gameCard.Controls.Add($runGameButton)
 
 # ---------- Detection ----------
 $infoCard=New-Object Windows.Forms.Panel
@@ -4586,7 +4626,7 @@ Apply-Theme
 Write-Log "Ready."
 Write-Log "[APP] Runtime root: $script:AppRoot"
 Write-Log "Game logs are automatically mirrored into the Logs folder beside this installer while it is running."
-Write-Log "v1.0: SR2 DXVK/Vulkan + DLSS5 Neural Rendering path; current feeder settings use ReShade Add-ons UI."
+Write-Log "v1.11: Run game, GitHub updates, and Purple theme; SR2 DXVK/Vulkan + DLSS5 Neural Rendering path."
 Write-Log "If detection is uncertain, launch once and click Re-detect. Runtime ReShade.log evidence takes priority."
 
 [void]$form.ShowDialog()
