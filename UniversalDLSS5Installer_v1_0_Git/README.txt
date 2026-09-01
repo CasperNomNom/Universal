@@ -1,15 +1,16 @@
-Universal DLSS 5 Installer v1.0
+Universal DLSS 5 Installer v1.11
 ================================
 
-Release baseline
-----------------
-v1.0 is the release renumbering of the locked SR2 Neural Rendering Settings UI
-baseline with the two-line mini debug console retained.
+Current release
+---------------
+v1.11 adds a Run game button for the selected executable. It also includes the
+GitHub release updater and Purple appearance theme introduced in v1.1, while
+retaining the locked SR2 Neural Rendering Settings UI baseline and mini console.
 
 No later Natural Pipeline, automatic iMMERSE, release-tag experiments, or other
 discarded branches are included in this release.
 
-Universal DLSS 5 Installer v1.0
+Universal DLSS 5 Installer v1.11
 Saints Row 2 - Neural Rendering Settings UI
 
 This build updates the working SR2 DXVK/Vulkan path to the upstream

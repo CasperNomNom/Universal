@@ -1,6 +1,27 @@
 Universal DLSS 5 Installer - Full Changelog
 ===============================================
-Current Release: v1.0
+Current Release: v1.11
+
+======================================================================
+UNIVERSAL DLSS 5 INSTALLER v1.11
+======================================================================
+
+- Added a Run game button beside Re-detect in the Game section.
+- The button launches the exact selected game executable.
+- The selected game's directory is used as the launch working directory.
+- The button stays disabled until a valid executable is selected.
+- Launch results and errors are written to the debug log.
+
+======================================================================
+UNIVERSAL DLSS 5 INSTALLER v1.1
+======================================================================
+
+- Added a Purple appearance theme alongside Dark and Light.
+- Added a Check for updates button backed by GitHub Releases.
+- Added semantic version comparison and setup-EXE download/launch flow.
+- Added graceful handling for repositories that have tags but no published Release.
+- Added a Windows GitHub push helper that also works from an extracted project folder.
+- Preserved the v1.0 SR2 Neural Rendering feature baseline.
 
 This changelog reconstructs the full development history leading to the current v1.0 release.
 Early builds were experimental development branches rather than formal public releases.
