@@ -1,5 +1,5 @@
 ﻿#define MyAppName "Universal DLSS 5 Installer"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "Universal DLSS 5 Installer"
 #define MyAppExeName "Universal DLSS 5 Installer.exe"
 
@@ -13,7 +13,7 @@ DefaultDirName={autopf}\Universal DLSS 5 Installer
 DefaultGroupName=Universal DLSS 5 Installer
 DisableProgramGroupPage=yes
 OutputDir=Output
-OutputBaseFilename=Universal_DLSS5_Installer_Setup_v1.0
+OutputBaseFilename=Universal_DLSS5_Installer_Setup_v1.1
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -22,9 +22,9 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName={#MyAppName} v{#MyAppVersion}
 UninstallDisplayIcon={app}\{#MyAppExeName}
-VersionInfoVersion=1.0.0.0
-VersionInfoProductVersion=1.0.0.0
-VersionInfoDescription=Universal DLSS 5 Installer v1.0 Setup
+VersionInfoVersion=1.1.0.0
+VersionInfoProductVersion=1.1.0.0
+VersionInfoDescription=Universal DLSS 5 Installer v1.1 Setup
 VersionInfoProductName=Universal DLSS 5 Installer
 ChangesAssociations=no
 CloseApplications=yes
